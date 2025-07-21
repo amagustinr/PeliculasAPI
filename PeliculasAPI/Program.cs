@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PeliculasAPI;
-using Microsoft.Extensions.Configuration; // Asegúrate de tener este using
+using Microsoft.Extensions.Configuration;
+using PeliculasAPI.Servicios; // Asegúrate de tener este using
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +64,9 @@ builder.Services.AddCors(opciones =>
     });
 });
 
+builder.Services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
+builder.Services.AddHttpContextAccessor(); // Asegúrate de registrar IHttpContextAccessor
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -78,6 +82,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors("MiPoliticaCors"); // Usa el nombre de tu política aquí
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseOutputCache();
 
