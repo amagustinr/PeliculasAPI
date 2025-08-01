@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using PeliculasAPI.Entidades;
-using PeliculasAPI.Validaciones;
 
 namespace PeliculasAPI.DTOs
 {
-    public class GeneroDTO : IId
+    public class CineDTO: IId
     {
         public int Id { get; set; }
         public required string Nombre { get; set; }
+        public double Latitud { get; set; }
+        public double Longitud { get; set; }
     }
 }
