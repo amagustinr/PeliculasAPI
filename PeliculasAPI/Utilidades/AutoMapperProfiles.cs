@@ -12,6 +12,15 @@ namespace PeliculasAPI.Utilidades
             ConfigurarMapeoGeneros();
             ConfigurarMapeoActores();
             ConfiguraMapeoCines(geometryFactory);
+            ConfigurarMapeoPelculas();
+        }
+
+        private void ConfigurarMapeoPelculas()
+        {
+            CreateMap<PeliculaCreacionDTO, Pelicula>()
+                .ForMember(x => x.Poster, opciones => opciones.Ignore())
+                .ForMember(x => x.PeliculasGeneros, dto =>
+                dto.MapFrom(p => p.GenerosIds!.Select(id => new PeliculaGenero { GeneroId = id})));
         }
 
         private void ConfiguraMapeoCines(GeometryFactory geometryFactory) 
