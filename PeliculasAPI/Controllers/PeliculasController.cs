@@ -175,5 +175,12 @@ namespace PeliculasAPI.Controllers
             }
             
         }
-    }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            return await Delete<Pelicula>(id);
+        }
+
+    } 
 }
