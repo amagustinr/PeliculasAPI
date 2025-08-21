@@ -88,7 +88,7 @@ namespace PeliculasAPI.Controllers
         protected async Task<IActionResult> Delete<TEntidad>(int id)
             where TEntidad : class, IId
         {
-            var registroBorrados = await context.Generos.Where(g => g.Id == id).ExecuteDeleteAsync();
+            var registroBorrados = await context.Set<TEntidad>().Where(g => g.Id == id).ExecuteDeleteAsync();
 
             if (registroBorrados == 0)
             {
