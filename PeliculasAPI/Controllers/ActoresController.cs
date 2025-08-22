@@ -21,7 +21,7 @@ namespace PeliculasAPI.Controllers
         private const string cacheTag = "actores";
         private readonly string contenedor = "actores";
 
-        public ActoresController(ApplicationDbContext context, IMapper mapper, 
+        public ActoresController(ApplicationDbContext context, IMapper mapper,
             IOutputCacheStore outputCacheStore, IAlmacenadorArchivos almacenadorArchivos)
             : base(context, mapper, outputCacheStore, cacheTag)
         {
@@ -35,7 +35,7 @@ namespace PeliculasAPI.Controllers
         [OutputCache(Tags = [cacheTag])]
         public async Task<List<ActorDTO>> Get([FromQuery] PaginacionDTO paginacion)
         {
-            return await Get<Actor, ActorDTO>(paginacion, ordenarPor:a => a.Nombre);
+            return await Get<Actor, ActorDTO>(paginacion, ordenarPor: a => a.Nombre);
         }
 
         [HttpGet("{id:int}", Name = "ObtenerActorPorId")]
@@ -54,7 +54,7 @@ namespace PeliculasAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromForm] ActorCreacionDTO actorCreacionDTO)
+        public async Task<IActionResult> Post([FromForm] ActorCreacionDTO actorCreacionDTO)
         {
             var actor = mapper.Map<Actor>(actorCreacionDTO);
 
@@ -66,25 +66,32 @@ namespace PeliculasAPI.Controllers
 
             context.Add(actor);
             await context.SaveChangesAsync();
-            await outputCacheStore.EvictByTagAsync("actores", default);
+            await outputCacheStore.EvictByTagAsync(cacheTag, default);
+
             return CreatedAtRoute("ObtenerActorPorId", new { id = actor.Id }, actor);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, [FromForm] ActorCreacionDTO actorCreacionDTO)
+        public async Task<IActionResult> Put(int id, [FromForm] ActorCreacionDTO actorCreacionDTO)
         {
             var actor = await context.Actores.FirstOrDefaultAsync(a => a.Id == id);
+
             if (actor is null)
             {
                 return NotFound();
             }
+
             actor = mapper.Map(actorCreacionDTO, actor);
+
             if (actorCreacionDTO.Foto is not null)
             {
-                actor.Foto = await almacenadorArchivos.Editar(actor.Foto, contenedor, actorCreacionDTO.Foto);
-            } 
+                actor.Foto = await almacenadorArchivos.Editar(actor.Foto, contenedor,
+                    actorCreacionDTO.Foto);
+            }
+
             await context.SaveChangesAsync();
             await outputCacheStore.EvictByTagAsync(cacheTag, default);
+
             return NoContent();
         }
 

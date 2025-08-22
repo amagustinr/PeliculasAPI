@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using AutoMapper;
+﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
@@ -7,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using PeliculasAPI.DTOs;
 using PeliculasAPI.Entidades;
 using PeliculasAPI.Utilidades;
+using System.Linq.Expressions;
 
 namespace PeliculasAPI.Controllers
 {
@@ -18,7 +18,7 @@ namespace PeliculasAPI.Controllers
         private readonly string cacheTag;
 
         public CustomBaseController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore outputCacheStore,
-                string cacheTag)
+            string cacheTag)
         {
             this.context = context;
             this.mapper = mapper;
@@ -27,8 +27,8 @@ namespace PeliculasAPI.Controllers
         }
 
         protected async Task<List<TDTO>> Get<TEntidad, TDTO>(
-            Expression<Func<TEntidad, object>> ordenarPor)
-            where TEntidad : class
+         Expression<Func<TEntidad, object>> ordenarPor)
+         where TEntidad : class
         {
             return await context.Set<TEntidad>()
                 .OrderBy(ordenarPor)
@@ -49,15 +49,17 @@ namespace PeliculasAPI.Controllers
 
         protected async Task<ActionResult<TDTO>> Get<TEntidad, TDTO>(int id)
             where TEntidad : class, IId
-            where TDTO : class, IId
+            where TDTO : IId
         {
             var entidad = await context.Set<TEntidad>()
                 .ProjectTo<TDTO>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(x => x.Id == id);
+
             if (entidad is null)
             {
                 return NotFound();
             }
+
             return entidad;
         }
 
@@ -73,8 +75,7 @@ namespace PeliculasAPI.Controllers
             return CreatedAtRoute(nombreRuta, new { id = entidad.Id }, entidadDTO);
         }
 
-        protected async Task<IActionResult> Put<TCreacionDTO, TEntidad>
-            (int id, TCreacionDTO creacionDTO)
+        protected async Task<IActionResult> Put<TCreacionDTO, TEntidad>(int id, TCreacionDTO creacionDTO)
             where TEntidad : class, IId
         {
             var entidadExiste = await context.Set<TEntidad>().AnyAsync(g => g.Id == id);
@@ -97,9 +98,9 @@ namespace PeliculasAPI.Controllers
         protected async Task<IActionResult> Delete<TEntidad>(int id)
             where TEntidad : class, IId
         {
-            var registroBorrados = await context.Set<TEntidad>().Where(g => g.Id == id).ExecuteDeleteAsync();
+            var registrosBorrados = await context.Set<TEntidad>().Where(g => g.Id == id).ExecuteDeleteAsync();
 
-            if (registroBorrados == 0)
+            if (registrosBorrados == 0)
             {
                 return NotFound();
             }

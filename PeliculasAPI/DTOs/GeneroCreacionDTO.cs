@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using PeliculasAPI.Validaciones;
+﻿using PeliculasAPI.Validaciones;
+using System.ComponentModel.DataAnnotations;
 
 namespace PeliculasAPI.DTOs
 {

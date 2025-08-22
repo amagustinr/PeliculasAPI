@@ -8,5 +8,6 @@
         public List<CineDTO> CinesSeleccionados { get; set; } = new List<CineDTO>();
         public List<CineDTO> CinesNoSeleccionados { get; set; } = new List<CineDTO>();
         public List<PeliculaActorDTO> Actores { get; set; } = new List<PeliculaActorDTO>();
+
     }
 }

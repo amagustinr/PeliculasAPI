@@ -1,9 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace PeliculasAPI.Entidades
 {
-    public class Pelicula: IId
+    public class Pelicula : IId
     {
         public int Id { get; set; }
         [Required]
@@ -14,7 +14,7 @@ namespace PeliculasAPI.Entidades
         [Unicode(false)]
         public string? Poster { get; set; }
         public List<PeliculaGenero> PeliculasGeneros { get; set; } = new List<PeliculaGenero>();
-        public List<PeliculaActor> PeliculasActores { get; set; } = new List<PeliculaActor>();
         public List<PeliculaCine> PeliculasCines { get; set; } = new List<PeliculaCine>();
+        public List<PeliculaActor> PeliculasActores { get; set; } = new List<PeliculaActor>();
     }
 }

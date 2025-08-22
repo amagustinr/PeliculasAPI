@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
@@ -19,8 +18,8 @@ namespace PeliculasAPI.Controllers
         private readonly IMapper mapper;
         private const string cacheTag = "generos";
 
-        public GenerosController(IOutputCacheStore outputCacheStore, ApplicationDbContext context, 
-            IMapper mapper) 
+        public GenerosController(IOutputCacheStore outputCacheStore, ApplicationDbContext context,
+            IMapper mapper)
             : base(context, mapper, outputCacheStore, cacheTag)
         {
             this.outputCacheStore = outputCacheStore;
@@ -35,7 +34,14 @@ namespace PeliculasAPI.Controllers
             return await Get<Genero, GeneroDTO>(paginacion, ordenarPor: g => g.Nombre);
         }
 
-        [HttpGet("{id:int}", Name= "ObtenerGeneroPorId")] // api/generos/500
+        [HttpGet("todos")] // api/generos/todos
+        [OutputCache(Tags = [cacheTag])]
+        public async Task<List<GeneroDTO>> Get()
+        {
+            return await Get<Genero, GeneroDTO>(ordenarPor: g => g.Nombre);
+        }
+
+        [HttpGet("{id:int}", Name = "ObtenerGeneroPorId")] // api/generos/500
         [OutputCache(Tags = [cacheTag])]
         public async Task<ActionResult<GeneroDTO>> Get(int id)
         {
