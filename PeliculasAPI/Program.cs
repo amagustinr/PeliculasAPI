@@ -1,62 +1,54 @@
-using Microsoft.EntityFrameworkCore;
-using PeliculasAPI;
-using Microsoft.Extensions.Configuration;
-using PeliculasAPI.Servicios;
-using NetTopologySuite.Geometries;
-using NetTopologySuite;
+using System.Text;
 using AutoMapper;
-using PeliculasAPI.Utilidades; // Asegúrate de tener este using
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
+using PeliculasAPI;
+using PeliculasAPI.Servicios;
+using PeliculasAPI.Utilidades;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// 1. Leer el origen permitido desde appsettings.json
-//    El builder.Configuration ya tiene acceso a los valores de appsettings.json
-var origenPermitido = builder.Configuration["origenesPermitidos"];
 
-// 2. Configurar el servicio CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: "MiPoliticaCors", // Dale un nombre a tu política
-                      policy =>
-                      {
-                          // Si origenPermitido no es null o vacío, úsalo.
-                          // De lo contrario, puedes poner un fallback o lanzar un error,
-                          // aunque para desarrollo el valor suele estar garantizado.
-                          if (!string.IsNullOrEmpty(origenPermitido))
-                          {
-                              policy.WithOrigins(origenPermitido)
-                                    .AllowAnyHeader()    // Permite cualquier cabecera (Content-Type, Authorization, etc.)
-                                    .AllowAnyMethod();   // Permite cualquier método HTTP (GET, POST, PUT, DELETE)
-                          }
-                          else
-                          {
-                              // Opcional: Manejar el caso donde el origen no está configurado
-                              // Por ejemplo, no permitir nada o registrar una advertencia.
-                              Console.WriteLine("Advertencia: 'origenesPermitidos' no está configurado en appsettings.json para CORS.");
-                          }
-                      });
-});
-
-// Agrega servicios a tu contenedor
 builder.Services.AddControllers();
-// Otros servicios como DbContext, Swagger, etc.
-// builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen();
-
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton(proveedor => new MapperConfiguration(configuracion => 
-    {
-        var geometryFactory = proveedor.GetRequiredService<GeometryFactory>();
-        configuracion.AddProfile(new AutoMapperProfiles(geometryFactory));
-    }).CreateMapper());
+builder.Services.AddSingleton(proveedor => new MapperConfiguration(configuracion =>
+{
+    var geometryFactory = proveedor.GetRequiredService<GeometryFactory>();
+    configuracion.AddProfile(new AutoMapperProfiles(geometryFactory));
+}).CreateMapper());
 
-builder.Services.AddDbContext<ApplicationDbContext>(opciones => 
-    opciones.UseSqlServer("name=DefaultConnection", sqlserver =>
-    sqlserver.UseNetTopologySuite()));
+builder.Services.AddIdentityCore<IdentityUser>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<UserManager<IdentityUser>>();
+builder.Services.AddScoped<SignInManager<IdentityUser>>();
+
+builder.Services.AddAuthentication().AddJwtBearer(opciones =>
+{
+    opciones.MapInboundClaims = false;
+    opciones.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["llavejwt"]!)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
+    opciones.UseSqlServer("name=DefaultConnection", sqlServer =>
+    sqlServer.UseNetTopologySuite()));
 
 builder.Services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
 
@@ -67,42 +59,36 @@ builder.Services.AddOutputCache(opciones =>
 
 var origenesPermitidos = builder.Configuration.GetValue<string>("origenesPermitidos")!.Split(",");
 
-builder.Services.AddCors(opciones => 
+builder.Services.AddCors(opciones =>
 {
     opciones.AddDefaultPolicy(opcionesCORS =>
     {
-        opcionesCORS.WithOrigins(origenesPermitidos).AllowAnyMethod().AllowAnyHeader().
-        WithExposedHeaders("cantidad-total-registros");
+        opcionesCORS.WithOrigins(origenesPermitidos).AllowAnyMethod().AllowAnyHeader()
+        .WithExposedHeaders("cantidad-total-registros");
     });
 });
 
 builder.Services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
-builder.Services.AddHttpContextAccessor(); // Asegúrate de registrar IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
-// Configurar el pipeline de solicitudes HTTP.
-
-// 3. Habilitar el middleware CORS y aplicar tu política
-app.UseCors("MiPoliticaCors"); // Usa el nombre de tu política aquí
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
-
-app.UseOutputCache();
 
 app.UseCors();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseOutputCache();
+
 
 app.Run();
