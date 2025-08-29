@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace PeliculasAPIPruebas
 {
-    internal class BasePruebas
+    public class BasePruebas
     {
         protected ApplicationDbContext ConstruirContext(string nombreDB)
         {
